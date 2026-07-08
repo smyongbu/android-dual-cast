@@ -18,6 +18,8 @@ public final class MainActivity extends Activity {
     private ProjectionView projectionView;
     private ProjectionSettings settings;
     private TouchEventSender sender;
+    private AdbServiceLauncher serviceLauncher;
+    private TextView statusView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +30,19 @@ public final class MainActivity extends Activity {
 
         settings = ProjectionSettings.load(this);
         sender = new TouchEventSender(settings);
+        serviceLauncher = new AdbServiceLauncher(this, settings, new AdbServiceLauncher.Listener() {
+            @Override
+            public void onStatus(int stringRes) {
+                statusView.setText(stringRes);
+            }
+
+            @Override
+            public void onDetail(String detail) {
+                if (detail != null && detail.trim().length() > 0) {
+                    statusView.setText(detail.trim());
+                }
+            }
+        });
         projectionView = new ProjectionView(this, settings, sender);
 
         FrameLayout root = new FrameLayout(this);
@@ -40,6 +55,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         projectionView.release();
+        serviceLauncher.close();
         super.onDestroy();
     }
 
@@ -51,6 +67,13 @@ public final class MainActivity extends Activity {
         int pad = dp(8);
         bar.setPadding(pad, pad, pad, pad);
 
+        statusView = new TextView(this);
+        statusView.setText(R.string.status_idle);
+        statusView.setTextColor(0xffffffff);
+        statusView.setTextSize(12f);
+        statusView.setGravity(Gravity.CENTER);
+        bar.addView(statusView);
+
         Button settingsButton = makeButton(getString(R.string.settings));
         settingsButton.setOnClickListener(v -> showSettingsDialog());
         bar.addView(settingsButton);
@@ -58,6 +81,10 @@ public final class MainActivity extends Activity {
         Button connectButton = makeButton(getString(R.string.connect_wireless));
         connectButton.setOnClickListener(v -> sender.connect());
         bar.addView(connectButton);
+
+        Button serverButton = makeButton(getString(R.string.start_server));
+        serverButton.setOnClickListener(v -> serviceLauncher.connectAndStart());
+        bar.addView(serverButton);
 
         Button pairButton = makeButton(getString(R.string.open_pairing));
         pairButton.setOnClickListener(v -> showPairingDialog());
@@ -86,6 +113,7 @@ public final class MainActivity extends Activity {
     private void showSettingsDialog() {
         LinearLayout form = dialogForm();
         EditText ip = editText(settings.phoneIp, InputType.TYPE_CLASS_PHONE);
+        EditText adbPort = editText(String.valueOf(settings.adbPort), InputType.TYPE_CLASS_NUMBER);
         EditText bitrate = editText(String.valueOf(settings.bitrateMbps), InputType.TYPE_CLASS_NUMBER);
         EditText fps = editText(String.valueOf(settings.fps), InputType.TYPE_CLASS_NUMBER);
         EditText dpi = editText(String.valueOf(settings.densityDpi), InputType.TYPE_CLASS_NUMBER);
@@ -93,6 +121,7 @@ public final class MainActivity extends Activity {
         CheckBox nav = checkBox(R.string.navigation_bar, settings.navigationBar);
 
         addLabeled(form, R.string.phone_ip, ip);
+        addLabeled(form, R.string.adb_port, adbPort);
         addLabeled(form, R.string.bitrate, bitrate);
         addLabeled(form, R.string.fps, fps);
         addLabeled(form, R.string.density_dpi, dpi);
@@ -105,6 +134,7 @@ public final class MainActivity extends Activity {
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.save, (dialog, which) -> {
                     settings = settings.withPhoneIp(ip.getText().toString().trim())
+                            .withAdbPort(parseInt(adbPort, 5555))
                             .withStreamingOptions(parseInt(bitrate, 4), parseInt(fps, 25),
                                     parseInt(dpi, 240), mirror.isChecked(), nav.isChecked());
                     settings.save(this);

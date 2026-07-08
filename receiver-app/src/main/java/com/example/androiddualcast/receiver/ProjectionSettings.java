@@ -7,6 +7,7 @@ public final class ProjectionSettings {
     private static final String PREFS = "projection_settings";
 
     public final String phoneIp;
+    public final int adbPort;
     public final int width;
     public final int height;
     public final int bitrateMbps;
@@ -15,9 +16,10 @@ public final class ProjectionSettings {
     public final boolean mirrorMode;
     public final boolean navigationBar;
 
-    private ProjectionSettings(String phoneIp, int width, int height, int bitrateMbps,
+    private ProjectionSettings(String phoneIp, int adbPort, int width, int height, int bitrateMbps,
             int fps, int densityDpi, boolean mirrorMode, boolean navigationBar) {
         this.phoneIp = phoneIp;
+        this.adbPort = adbPort;
         this.width = width;
         this.height = height;
         this.bitrateMbps = bitrateMbps;
@@ -28,7 +30,7 @@ public final class ProjectionSettings {
     }
 
     public static ProjectionSettings defaults() {
-        return new ProjectionSettings("", 1280, 720, 4, 25, 240, true, true);
+        return new ProjectionSettings("", 5555, 1280, 720, 4, 25, 240, true, true);
     }
 
     public static ProjectionSettings load(Context context) {
@@ -36,6 +38,7 @@ public final class ProjectionSettings {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         return new ProjectionSettings(
                 prefs.getString("phoneIp", defaults.phoneIp),
+                prefs.getInt("adbPort", defaults.adbPort),
                 defaults.width,
                 defaults.height,
                 prefs.getInt("bitrateMbps", defaults.bitrateMbps),
@@ -49,6 +52,7 @@ public final class ProjectionSettings {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit()
                 .putString("phoneIp", phoneIp)
+                .putInt("adbPort", adbPort)
                 .putInt("bitrateMbps", bitrateMbps)
                 .putInt("fps", fps)
                 .putInt("densityDpi", densityDpi)
@@ -58,13 +62,18 @@ public final class ProjectionSettings {
     }
 
     public ProjectionSettings withPhoneIp(String value) {
-        return new ProjectionSettings(value, width, height, bitrateMbps, fps, densityDpi,
+        return new ProjectionSettings(value, adbPort, width, height, bitrateMbps, fps, densityDpi,
+                mirrorMode, navigationBar);
+    }
+
+    public ProjectionSettings withAdbPort(int value) {
+        return new ProjectionSettings(phoneIp, value, width, height, bitrateMbps, fps, densityDpi,
                 mirrorMode, navigationBar);
     }
 
     public ProjectionSettings withStreamingOptions(int bitrate, int frameRate, int dpi,
             boolean mirror, boolean navBar) {
-        return new ProjectionSettings(phoneIp, width, height, bitrate, frameRate, dpi,
+        return new ProjectionSettings(phoneIp, adbPort, width, height, bitrate, frameRate, dpi,
                 mirror, navBar);
     }
 }
