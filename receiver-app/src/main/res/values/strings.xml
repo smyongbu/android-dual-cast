@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">手机投屏</string>
+    <string name="waiting_title">无线投屏</string>
+    <string name="waiting_subtitle">等待连接手机</string>
+    <string name="phone_ip">手机 IP</string>
+    <string name="bitrate">码率</string>
+    <string name="fps">帧率</string>
+    <string name="density_dpi">扩展屏 DPI</string>
+    <string name="mirror_mode">镜像投屏</string>
+    <string name="navigation_bar">导航栏</string>
+    <string name="connect_wireless">无线投屏</string>
+    <string name="open_pairing">无线调试配对</string>
+    <string name="settings">设置</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="pairing_title">无线调试配对</string>
+    <string name="pairing_hint">请在手机开发者选项中打开无线调试，输入无线调试端口、配对端口和配对码。</string>
+    <string name="debug_port">无线调试端口</string>
+    <string name="pair_port">配对端口</string>
+    <string name="pair_code">配对码</string>
+    <string name="pair">配对</string>
+</resources>

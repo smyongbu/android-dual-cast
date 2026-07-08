@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">投屏助手</string>
+    <string name="helper_title">投屏助手</string>
+    <string name="helper_body">请开启悬浮窗、后台运行和 USB/无线调试权限。扩展投屏时可使用 Nova 或其他第三方桌面作为投屏桌面。</string>
+    <string name="open_overlay">开启悬浮窗权限</string>
+    <string name="open_developer_options">打开开发者选项</string>
+    <string name="tips_title">使用提示</string>
+    <string name="tips_body">手机端负责辅助屏、横屏和保活；车机端负责显示、触摸回传和连接控制。</string>
+</resources>
