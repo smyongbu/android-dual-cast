@@ -1,60 +1,80 @@
-# Android Dual Cast
+# 安卓双端投屏
 
-Android Dual Cast is a planned Android-to-Android projection system inspired by
-AndroidCast, scrcpy, Android Auto and CarLife style workflows.
+这是一个面向“安卓手机投屏到另一台安卓设备”的开源原型项目，目标效果接近
+AndroidCast、scrcpy、Android Auto、CarLife 这一类方案。
 
-The goal is:
+项目目标：
 
-- Phone A runs the real apps and provides the projected display.
-- Device B, such as an Android 4.4 car unit or tablet, shows a 1280x720
-  projected screen.
-- Device B sends touch and key events back to Phone A.
-- In extended mode, Phone A and Device B can be operated independently.
+- 第一台高性能手机负责运行应用、生成投屏画面。
+- 第二台安卓设备负责显示画面，例如安卓 4.4 车机、平板、旧手机。
+- 第二台设备把触摸、返回、快捷键等输入发回第一台手机。
+- 在扩展投屏模式下，第一台手机和第二台设备可以相对独立操作。
 
-This repository currently contains the project skeleton and protocol design.
-It is intentionally split into two Android apps:
+当前项目拆成三个模块：
 
-- `host-helper`: installed on Phone A. It assists with permissions, overlay,
-  keep-alive, rotation and extended-display preparation.
-- `receiver-app`: installed on Device B. It connects to Phone A through USB ADB
-  or wireless debugging, shows video full-screen and sends input events back.
+- `host-helper`：安装在第一台手机上，负责权限引导、悬浮窗、后台保活、横屏和扩展屏准备。
+- `receiver-app`：安装在第二台安卓设备上，负责连接手机、显示画面、回传触摸。
+- `projection-server`：通过 ADB 启动在第一台手机上的投屏服务骨架，后续负责采集画面、编码和注入输入。
 
-## Target Behavior
+## 当前进度
 
-1. Install `host-helper` on the phone.
-2. Install a launcher such as Nova Launcher on the phone. It can be used as the
-   projected desktop in extended display mode.
-3. Install `receiver-app` on the Android 4.4 receiver.
-4. Enable USB debugging on the phone. Wireless debugging can be enabled after
-   the first wired pairing.
-5. Receiver connects to the phone and starts one of these modes:
-   - Mirror mode: shows the phone's current display.
-   - Extended mode: starts an auxiliary or virtual display and projects that
-     display instead of the main phone screen.
+已经完成：
 
-## Important Limits
+- 第二台设备的全屏投屏界面。
+- 手机 IP、ADB 端口、码率、帧率、DPI、镜像模式等设置。
+- 安卓 4.4 兼容的 H.264 `MediaCodec` 解码接收骨架。
+- 接收端内置 ADB 协议客户端，不依赖电脑上的 `adb.exe`。
+- ADB RSA 授权握手。
+- ADB `shell:` 命令通道。
+- ADB sync 文件推送骨架。
+- GitHub Actions 云端编译 APK。
 
-This kind of app does not need root when it controls the phone through ADB or
-wireless debugging, but the user must explicitly enable debugging and approve
-the pairing prompt.
+还在开发：
 
-Extended mode depends on Android display-management behavior. Some phones and
-ROMs may only work through an auxiliary display window, while others can use a
-virtual display. Some third-party apps may still open on the phone's main screen
-and need to be moved to the projected display.
+- 把 `projection-server.jar` 自动打包进接收端 APK。
+- 手机端真实屏幕采集。
+- H.264 实时编码。
+- 输入事件注入到指定显示。
+- 扩展屏/辅助屏模式。
+- Nova 或其他第三方桌面作为投屏桌面。
+- 音频传输。
 
-## Implementation Stages
+## 使用方式
 
-1. Receiver UI, settings and touch capture.
-2. Wireless debugging pairing flow.
-3. ADB transport from Android receiver to phone.
-4. Video decoding with `MediaCodec` on Android 4.4.
-5. Input event forwarding.
-6. Mirror mode.
-7. Extended display mode.
-8. Navigation bar shortcuts and three-finger app transfer.
+1. 第一台手机安装 `host-helper-debug.apk`。
+2. 第二台安卓设备安装 `receiver-app-debug.apk`。
+3. 第一台手机开启 USB 调试。
+4. 如果使用经典无线 ADB，需要先让手机进入无线 ADB 模式，例如 `adb tcpip 5555`。
+5. 第二台设备和第一台手机连接同一个网络，或第二台连接第一台热点。
+6. 在第二台设备的设置里填写第一台手机 IP 和 ADB 端口。
+7. 点击“启动服务”尝试连接手机 ADB。
 
-## Build On GitHub
+注意：目前先支持经典 ADB 端口模式，例如 `5555`。Android 11 之后的完整无线调试配对协议还没有做完。
 
-This repository contains a GitHub Actions workflow that can build the APKs in
-the cloud. See `docs/github-build.md`.
+## 为什么需要 ADB
+
+普通安卓 App 不能直接捕获另一台手机的屏幕，也不能直接给另一台手机注入触摸。
+所以接收端必须通过 ADB 请求第一台手机启动一个具有 shell 级能力的小服务。
+
+这条路线不需要 root，但需要用户主动开启 USB 调试或无线调试，并在手机上确认授权。
+
+## 镜像投屏和扩展投屏
+
+镜像投屏：第二台设备显示第一台手机当前屏幕，双方操作同一个界面。
+
+扩展投屏：第二台设备显示手机上的辅助屏或虚拟屏。Nova 桌面或其他第三方桌面可以作为这个副屏的桌面入口。这样第一台手机主屏和第二台设备上的投屏界面可以相对独立。
+
+扩展投屏的兼容性和手机系统有关。有些手机适合辅助屏小窗口，有些手机适合虚拟屏。部分第三方 App 可能会默认打开在主屏，需要后续做“飞屏/流转”功能。
+
+## 云端编译 APK
+
+本仓库已经配置 GitHub Actions。每次推送代码后会自动编译：
+
+- `receiver-app-debug.apk`
+- `host-helper-debug.apk`
+- `projection-server-debug.aar`
+
+编译完成后可以在 GitHub Actions 的 Artifacts 中下载。
+
+详细说明见 [docs/github-build.md](docs/github-build.md)。
+

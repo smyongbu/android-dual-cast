@@ -1,48 +1,53 @@
-# Build APKs On GitHub
+# 使用 GitHub 编译 APK
 
-This project includes a GitHub Actions workflow at:
+项目已经包含 GitHub Actions 配置：
 
 ```text
 .github/workflows/android-build.yml
 ```
 
-## Steps
+## 编译步骤
 
-1. Create an empty GitHub repository.
-2. Upload all files in this folder to the repository.
-3. Open the repository on GitHub.
-4. Go to `Actions`.
-5. Run `Android Build`, or push a commit to `main` / `master`.
-6. After the build finishes, open the workflow run.
-7. Download the artifact named `android-dual-cast-debug-apks`.
+1. 把项目上传到 GitHub 仓库。
+2. 打开仓库页面。
+3. 进入 `Actions`。
+4. 运行 `Android Build`，或者直接推送一次代码触发编译。
+5. 等待构建完成。
+6. 打开对应的 workflow run。
+7. 下载名为 `android-dual-cast-debug-apks` 的构建产物。
 
-The artifact contains:
+## 产物说明
 
-- `receiver-app-debug.apk`: install on the Android 4.4 receiver or car unit.
-- `host-helper-debug.apk`: install on the high-performance phone.
-- `projection-server-debug.aar`: phone-side server skeleton for later ADB launch packaging.
+- `receiver-app-debug.apk`：安装到第二台安卓设备或车机。
+- `host-helper-debug.apk`：安装到第一台高性能手机。
+- `projection-server-debug.aar`：手机端投屏服务骨架，后续会打包成可通过 ADB 启动的 jar。
 
-## Current Prototype Status
+## 当前 APK 能做什么
 
-The receiver APK already contains:
+接收端 APK 已经包含：
 
-- full-screen projection surface;
-- settings for phone IP, bitrate, FPS, DPI, mirror mode and navigation bar;
-- wireless-debugging pairing input screen;
-- control channel packet sender;
-- touch coordinate mapping to 1280x720;
-- H.264 stream receiver and `MediaCodec` decoder skeleton.
+- 全屏投屏界面；
+- 手机 IP、ADB 端口、码率、FPS、DPI、镜像模式、导航栏设置；
+- 无线调试配对输入界面；
+- ADB 协议客户端；
+- ADB RSA 授权握手；
+- ADB shell 命令通道；
+- ADB sync 文件推送骨架；
+- 触摸坐标映射到 1280x720；
+- H.264 视频流接收和 `MediaCodec` 解码骨架。
 
-The host-helper APK already contains:
+手机助手 APK 已经包含：
 
-- overlay permission shortcut;
-- developer-options shortcut;
-- phone-side setup tips.
+- 悬浮窗权限入口；
+- 开发者选项入口；
+- 手机端准备工作说明。
 
-The missing production pieces are:
+## 还没完成的部分
 
-- Android receiver acting as a full ADB host;
-- real display capture and H.264 encoding;
-- input injection into the selected display;
-- extended-display app launching and Nova binding;
-- audio stream.
+- 手机端真实画面采集；
+- H.264 实时编码；
+- 输入事件注入；
+- 扩展屏创建和应用启动；
+- Nova 桌面绑定；
+- 音频流。
+

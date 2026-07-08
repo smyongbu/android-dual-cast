@@ -1,80 +1,74 @@
-# Architecture
+# 架构说明
 
-## Components
+## 模块
 
-### Receiver App
+### receiver-app
 
-Runs on the second Android device, with Android 4.4 as the minimum target.
+安装在第二台安卓设备上，最低目标是安卓 4.4。
 
-Responsibilities:
+职责：
 
-- Full-screen 1280x720 display surface.
-- H.264 video decoding through `MediaCodec`.
-- Touch, back, home and shortcut capture.
-- Settings for phone IP, bitrate, frame rate, DPI, mirror mode and audio.
-- ADB or wireless-debugging connection coordinator.
+- 显示 1280x720 全屏投屏画面；
+- 使用 `MediaCodec` 解码 H.264；
+- 采集触摸、返回键、主页键和快捷键；
+- 提供手机 IP、ADB 端口、码率、帧率、DPI、镜像模式等设置；
+- 通过内置 ADB 客户端连接第一台手机；
+- 启动手机端投屏服务；
+- 接收视频流并发送输入事件。
 
-### Host Helper
+### host-helper
 
-Runs on the high-performance phone.
+安装在第一台高性能手机上。
 
-Responsibilities:
+职责：
 
-- Request overlay permission.
-- Request notification-listener permission when needed.
-- Keep the helper alive in the background.
-- Help force landscape orientation for projected apps.
-- Create or guide the user to auxiliary/virtual display behavior.
-- Broadcast phone availability for automatic receiver connection.
+- 引导开启悬浮窗权限；
+- 引导开启开发者选项、USB 调试或无线调试；
+- 后续负责后台保活、横屏辅助、辅助屏/虚拟屏准备；
+- 后续可以广播手机状态，方便第二台设备无感连接。
 
-### Phone Projection Service
+### projection-server
 
-This is the privileged runtime started on the phone through ADB, similar in
-spirit to scrcpy's server process.
+通过 ADB 启动在第一台手机上的服务，类似 scrcpy 的 server 进程。
 
-Responsibilities:
+职责：
 
-- Capture the selected display.
-- Encode the selected display to H.264.
-- Receive input packets from the receiver.
-- Inject input events into the selected display.
-- Start selected apps on the projected display when the Android version allows
-  it.
+- 选择主屏、辅助屏或虚拟屏；
+- 采集目标显示的画面；
+- 编码成 H.264；
+- 接收第二台设备发来的触摸和按键；
+- 把输入事件注入到目标显示；
+- 在系统允许时把指定 App 启动到扩展屏上。
 
-This repository does not vendor scrcpy code yet. The cleanest route is to keep
-the transport and UI independent, then either:
+## 工作模式
 
-- integrate scrcpy server behavior under its license, or
-- implement a small custom server for the subset of features needed here.
+### 镜像模式
 
-## Modes
+采集第一台手机的主屏幕。兼容性最好，但两台设备操作的是同一个界面。
 
-### Mirror Mode
+### 扩展模式
 
-The phone's main display is captured. This is the easiest and most compatible
-mode, but both devices control the same screen.
+第二台设备显示第一台手机上的辅助屏或虚拟屏。Nova 桌面可以作为投屏桌面。
 
-### Extended Mode
+这就是“手机和车机/第二设备相对独立操作”的关键。
 
-The receiver shows an auxiliary or virtual display. A launcher such as Nova can
-act as the projected desktop. This is what makes the phone and receiver feel
-independent.
+实际表现取决于手机系统：
 
-The practical behavior can vary by phone ROM:
+- 辅助屏小窗口：兼容性更好，但手机上可能会出现一个小窗口。
+- 虚拟屏：手机主屏更干净，但部分 App 可能会打开到主屏，需要做飞屏流转。
 
-- Auxiliary display window: more compatible, but the phone may show a small
-  display window.
-- Virtual display: cleaner phone-side experience, but app launching can be less
-  reliable.
+## 通信协议
 
-## Protocol
+控制消息是带 4 字节长度前缀的 UTF-8 JSON。
 
-Control messages are small JSON packets sent over TCP. Video is H.264 over a
-separate stream.
+初始端口：
 
-Initial ports:
+- `27183`：控制通道；
+- `27184`：视频通道；
+- `27185`：预留音频通道。
 
-- `27183`: control channel.
-- `27184`: video channel.
-- `27185`: optional audio channel.
+ADB 端口：
+
+- 当前优先支持经典无线 ADB，例如 `5555`；
+- Android 11+ 的无线调试配对协议后续实现。
 

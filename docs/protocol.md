@@ -1,11 +1,10 @@
-# Wire Protocol Draft
+# 通信协议草案
 
-All control packets are UTF-8 JSON messages with a 4-byte big-endian length
-prefix.
+控制消息使用 UTF-8 JSON，每条消息前面加 4 字节大端长度。
 
-## Hello
+## 握手
 
-Receiver to phone:
+接收端发给手机端：
 
 ```json
 {
@@ -18,7 +17,7 @@ Receiver to phone:
 }
 ```
 
-Phone to receiver:
+手机端返回：
 
 ```json
 {
@@ -29,7 +28,7 @@ Phone to receiver:
 }
 ```
 
-## Touch
+## 触摸事件
 
 ```json
 {
@@ -44,14 +43,14 @@ Phone to receiver:
 }
 ```
 
-Actions:
+动作类型：
 
 - `down`
 - `move`
 - `up`
 - `cancel`
 
-## Key
+## 按键事件
 
 ```json
 {
@@ -61,7 +60,7 @@ Actions:
 }
 ```
 
-Keys:
+按键类型：
 
 - `back`
 - `home`
@@ -70,7 +69,7 @@ Keys:
 - `app_music`
 - `app_custom`
 
-## Mode Change
+## 切换模式
 
 ```json
 {
