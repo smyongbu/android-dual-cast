@@ -5,7 +5,10 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.example.androiddualcast.receiver.adb.AdbConnection;
+import com.example.androiddualcast.receiver.adb.AdbSync;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,6 +38,7 @@ public final class AdbServiceLauncher {
                 connection = new AdbConnection(context, settings.phoneIp, settings.adbPort);
                 connection.connect();
                 postStatus(R.string.status_connected);
+                pushServerIfBundled(connection);
                 String command = buildStartCommand();
                 String output = connection.shell(command);
                 postDetail(output);
@@ -63,6 +67,19 @@ public final class AdbServiceLauncher {
                 + " --dpi " + settings.densityDpi
                 + " --bitrate " + settings.bitrateMbps + "M"
                 + " --fps " + settings.fps;
+    }
+
+    private void pushServerIfBundled(AdbConnection connection) throws IOException {
+        try (InputStream input = context.getAssets().open("projection-server.jar")) {
+            byte[] content = AdbSync.readAll(input);
+            connection.push(content, "/data/local/tmp/projection-server.jar", 0644);
+        } catch (IOException missingOrFailed) {
+            /*
+             * The current prototype can still start a server that was pushed manually.
+             * Once the build packages projection-server.jar as an asset, this method
+             * will automatically refresh it on every connection.
+             */
+        }
     }
 
     private void postStatus(int stringRes) {

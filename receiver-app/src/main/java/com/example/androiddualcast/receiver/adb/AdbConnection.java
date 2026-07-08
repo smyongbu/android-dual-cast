@@ -52,24 +52,36 @@ public final class AdbConnection {
     }
 
     public String shell(String command) throws IOException {
+        Stream stream = open("shell:" + command);
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        try {
+            while (true) {
+                byte[] payload = stream.read();
+                if (payload == null) {
+                    return new String(result.toByteArray(), StandardCharsets.UTF_8);
+                }
+                result.write(payload, 0, payload.length);
+            }
+        } finally {
+            stream.close();
+        }
+    }
+
+    public void push(byte[] content, String remotePath, int mode) throws IOException {
+        new AdbSync(this).push(content, remotePath, mode);
+    }
+
+    Stream open(String destination) throws IOException {
         int localId = nextLocalId.getAndIncrement();
         AdbMessage.of(AdbMessage.OPEN, localId, 0,
-                AdbMessage.stringPayload("shell:" + command)).write(output);
-        int remoteId = -1;
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
+                AdbMessage.stringPayload(destination)).write(output);
 
         while (true) {
             AdbMessage message = AdbMessage.read(input);
             if (message.command == AdbMessage.OKAY && message.arg1 == localId) {
-                remoteId = message.arg0;
-            } else if (message.command == AdbMessage.WRTE && message.arg1 == localId) {
-                result.write(message.payload, 0, message.payload.length);
-                AdbMessage.of(AdbMessage.OKAY, localId, message.arg0, new byte[0]).write(output);
+                return new Stream(localId, message.arg0);
             } else if (message.command == AdbMessage.CLSE && message.arg1 == localId) {
-                if (remoteId >= 0) {
-                    AdbMessage.of(AdbMessage.CLSE, localId, remoteId, new byte[0]).write(output);
-                }
-                return new String(result.toByteArray(), StandardCharsets.UTF_8);
+                throw new IOException("ADB stream closed");
             }
         }
     }
@@ -85,5 +97,72 @@ public final class AdbConnection {
         input = null;
         output = null;
     }
-}
 
+    final class Stream {
+        private final int localId;
+        private final int remoteId;
+        private boolean closed;
+
+        private Stream(int localId, int remoteId) {
+            this.localId = localId;
+            this.remoteId = remoteId;
+        }
+
+        void write(byte[] payload) throws IOException {
+            if (closed) {
+                throw new IOException("ADB stream is closed");
+            }
+            AdbMessage.of(AdbMessage.WRTE, localId, remoteId, payload).write(output);
+            while (true) {
+                AdbMessage message = AdbMessage.read(input);
+                if (message.command == AdbMessage.OKAY && message.arg1 == localId) {
+                    return;
+                }
+                if (message.command == AdbMessage.CLSE && message.arg1 == localId) {
+                    closed = true;
+                    throw new IOException("ADB stream closed");
+                }
+            }
+        }
+
+        byte[] read() throws IOException {
+            if (closed) {
+                return null;
+            }
+            while (true) {
+                AdbMessage message = AdbMessage.read(input);
+                if (message.command == AdbMessage.WRTE && message.arg1 == localId) {
+                    AdbMessage.of(AdbMessage.OKAY, localId, message.arg0, new byte[0]).write(output);
+                    return message.payload;
+                }
+                if (message.command == AdbMessage.CLSE && message.arg1 == localId) {
+                    closed = true;
+                    return null;
+                }
+            }
+        }
+
+        byte[] readExactly(int length) throws IOException {
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            while (result.size() < length) {
+                byte[] payload = read();
+                if (payload == null) {
+                    throw new IOException("ADB stream closed");
+                }
+                result.write(payload, 0, payload.length);
+            }
+            byte[] all = result.toByteArray();
+            if (all.length == length) {
+                return all;
+            }
+            throw new IOException("Unexpected extra sync bytes");
+        }
+
+        void close() throws IOException {
+            if (!closed) {
+                AdbMessage.of(AdbMessage.CLSE, localId, remoteId, new byte[0]).write(output);
+                closed = true;
+            }
+        }
+    }
+}
