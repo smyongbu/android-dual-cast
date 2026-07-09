@@ -30,6 +30,9 @@ jobs:
         with:
           gradle-version: "8.7"
 
+      - name: Run unit tests
+        run: gradle testDebugUnitTest
+
       - name: Build debug APKs
         run: gradle assembleDebug
 
