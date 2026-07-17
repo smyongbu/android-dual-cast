@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">手机投屏</string>
+    <string name="app_name">璇景接收</string>
     <string name="waiting_title">无线投屏</string>
     <string name="waiting_subtitle">等待连接手机</string>
     <string name="phone_ip">手机 IP</string>
@@ -27,4 +27,17 @@
     <string name="status_connected">ADB 已连接</string>
     <string name="status_failed">ADB 连接失败</string>
     <string name="status_server_started">手机端服务已请求启动</string>
+    <string name="test_ip">测试 IP</string>
+    <string name="test_port">测试端口</string>
+    <string name="test_ip_empty">请先输入手机 IP</string>
+    <string name="test_ip_success">IP 可连接：%1$s</string>
+    <string name="test_ip_no_response">IP 格式正确，但设备未响应：%1$s</string>
+    <string name="test_ip_invalid">IP 地址无效或无法解析</string>
+    <string name="test_port_invalid">端口必须是 1～65535</string>
+    <string name="test_port_success">端口 %1$d 可以连接</string>
+    <string name="test_port_failed">端口 %1$d 无法连接，请检查手机和无线调试</string>
+    <string name="pair_code_invalid">配对码必须是 6 位数字</string>
+    <string name="pairing_verified">配对成功，并已通过无线 ADB 连接验证</string>
+    <string name="pairing_connect_failed">配对完成，但无线调试端口连接验证失败</string>
+    <string name="pairing_failed_detail">配对失败（%1$s），请确认配对码仍有效</string>
 </resources>

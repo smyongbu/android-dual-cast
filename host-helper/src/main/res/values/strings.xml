@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">投屏助手</string>
+    <string name="app_name">璇景投屏</string>
     <string name="helper_title">投屏助手</string>
     <string name="helper_body">请开启悬浮窗、后台运行和 USB/无线调试权限。扩展投屏时可使用 Nova 或其他第三方桌面作为投屏桌面。</string>
     <string name="open_overlay">开启悬浮窗权限</string>

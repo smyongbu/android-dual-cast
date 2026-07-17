@@ -30,6 +30,7 @@ public final class AdbConnection {
     public void connect() throws IOException, GeneralSecurityException {
         socket = new Socket();
         socket.connect(new InetSocketAddress(host, port), 5000);
+        socket.setSoTimeout(7000);
         socket.setTcpNoDelay(true);
         input = new DataInputStream(socket.getInputStream());
         output = new DataOutputStream(socket.getOutputStream());
